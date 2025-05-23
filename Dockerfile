@@ -42,4 +42,6 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
     /app
 
 WORKDIR /app
+COPY --from=mwader/static-ffmpeg:7.1.1 /ffmpeg /bin/ffmpeg
+COPY --from=mwader/static-ffmpeg:7.1.1 /ffprobe /bin/ffprobe
 COPY . .
