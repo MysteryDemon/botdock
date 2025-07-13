@@ -7,7 +7,8 @@ RUN dnf -y update && \
     dnf -y install g++ make wget pv git bash xz gawk \
     python${PYTHON_VERSION} python${PYTHON_VERSION}-devel mediainfo psmisc procps-ng supervisor \
     zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel libffi-devel \
-    xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl && \
+    xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl \
+    aria2 && \
     dnf clean all
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
@@ -42,4 +43,6 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
     /app
 
 WORKDIR /app
+COPY --from=mwader/static-ffmpeg:7.1.1 /ffmpeg /bin/ffmpeg
+COPY --from=mwader/static-ffmpeg:7.1.1 /ffprobe /bin/ffprobe
 COPY . .
