@@ -12,7 +12,7 @@ RUN dnf -y update && \
     dnf clean all
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
-    python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
+    python${PYTHON_VERSION} -m pip install --upgrade pip "setuptools<81" && \
     alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
     alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip${PYTHON_VERSION} 1
 
