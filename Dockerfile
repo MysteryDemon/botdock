@@ -1,4 +1,4 @@
-FROM fedora:42
+FROM fedora:43
 
 ARG PYTHON_VERSION=3.10
 ENV PYTHON_VERSION=${PYTHON_VERSION}
@@ -32,6 +32,7 @@ RUN bash -c '\
     pyenv install 3.11.9 && \
     pyenv install 3.12.3 && \
     pyenv install 3.13.3 && \
+    pyenv global 3.10.14 && \
     unset PYTHON_CONFIGURE_OPTS'
 
 ENV SUPERVISORD_CONF_DIR=/etc/supervisor/conf.d
