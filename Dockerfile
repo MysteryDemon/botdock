@@ -44,13 +44,13 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
     /app
 
 WORKDIR /app
-COPY --from=mwader/static-ffmpeg:latest /ffmpeg /bin/ffmpeg
-COPY --from=mwader/static-ffmpeg:latest /ffprobe /bin/ffprobe
-COPY --from=mwader/static-ffmpeg:latest /doc /doc
-COPY --from=mwader/static-ffmpeg:latest /versions.json /versions.json
-COPY --from=mwader/static-ffmpeg:latest /etc/ssl/cert.pem /etc/ssl/cert.pem
-COPY --from=mwader/static-ffmpeg:latest /etc/fonts /etc/fonts
-COPY --from=mwader/static-ffmpeg:latest /usr/share/fonts /usr/share/fonts
-COPY --from=mwader/static-ffmpeg:latest /usr/share/consolefonts /usr/share/consolefonts
-COPY --from=mwader/static-ffmpeg:latest /var/cache/fontconfig /var/cache/fontconfig
+COPY --from=mwader/static-ffmpeg:8.0 /ffmpeg /bin/ffmpeg
+COPY --from=mwader/static-ffmpeg:8.0 /ffprobe /bin/ffprobe
+COPY --from=mwader/static-ffmpeg:8.0 /doc /doc
+COPY --from=mwader/static-ffmpeg:8.0 /versions.json /versions.json
+COPY --from=mwader/static-ffmpeg:8.0 /etc/ssl/cert.pem /etc/ssl/cert.pem
+COPY --from=mwader/static-ffmpeg:8.0 /etc/fonts /etc/fonts
+COPY --from=mwader/static-ffmpeg:8.0 /usr/share/fonts /usr/share/fonts
+COPY --from=mwader/static-ffmpeg:8.0 /usr/share/consolefonts /usr/share/consolefonts
+COPY --from=mwader/static-ffmpeg:8.0 /var/cache/fontconfig /var/cache/fontconfig
 COPY . .
