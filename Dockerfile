@@ -24,7 +24,7 @@ RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
     /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux* \
     /av1an-deps/lib/libcrypto.so* /av1an-deps/lib/libssl.so* \
     /av1an-deps/lib/libstdc++.so* /av1an-deps/lib/libgcc_s.so* \
-    /av1an-deps/lib/libz.so*
+    /av1an-deps/lib/libz.so* /av1an-deps/lib/libpcre2*.so*
 
 # -- Stage 3: final image -------------------------------------------------------
 FROM fedora:43
