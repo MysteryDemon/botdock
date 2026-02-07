@@ -12,10 +12,10 @@ RUN pacman -Syu --noconfirm && \
     rust nasm clang vapoursynth && \
     pacman -Scc --noconfirm
 
-RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
-    python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
-    ln -sf /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
-    ln -sf /usr/bin/pip${PYTHON_VERSION} /usr/bin/pip3
+RUN python -m ensurepip --upgrade && \
+    python -m pip install --upgrade pip setuptools && \
+    ln -sf /usr/bin/python /usr/bin/python3 && \
+    ln -sf /usr/bin/pip /usr/bin/pip3
 
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
@@ -33,7 +33,9 @@ RUN bash -c '\
     pyenv install 3.11.9 && \
     pyenv install 3.12.3 && \
     pyenv install 3.13.3 && \
-    pyenv global 3.10.14'
+    pyenv global 3.10.14' && \
+    echo '\''eval "$(${PYENV_ROOT}/bin/pyenv init -)"'\'' >> /root/.bashrc && \
+    echo '\''eval "$(${PYENV_ROOT}/bin/pyenv virtualenv-init -)"'\'' >> /root/.bashrc
 
 RUN git clone https://github.com/master-of-zen/Av1an /tmp/Av1an && \
     cd /tmp/Av1an && \
