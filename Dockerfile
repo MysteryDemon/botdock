@@ -10,7 +10,8 @@ RUN pacman -Syu --noconfirm && \
     findutils gdbm ncurses tar curl \
     aria2 base-devel tk \
     rust nasm clang vapoursynth \
-    autoconf automake libtool perl && \
+    autoconf automake libtool perl \
+    aom ffms2 libvpx mkvtoolnix-cli svt-av1 vmaf && \
     pacman -Scc --noconfirm
 
 ENV PYENV_ROOT="/root/.pyenv"
