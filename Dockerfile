@@ -16,7 +16,7 @@ RUN pacman -Syu --noconfirm && \
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
 
-RUN bash -c '\
+RUN bash -c ' \
     export PYENV_ROOT="/root/.pyenv" && \
     export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH" && \
     git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT && \
@@ -24,9 +24,10 @@ RUN bash -c '\
     eval "$(pyenv init -)" && \
     eval "$(pyenv virtualenv-init -)" && \
     pyenv install 3.10.14 && \
-    pyenv global 3.10.14' && \
-    echo '\''eval "$(${PYENV_ROOT}/bin/pyenv init -)"'\'' >> /root/.bashrc && \
-    echo '\''eval "$(${PYENV_ROOT}/bin/pyenv virtualenv-init -)"'\'' >> /root/.bashrc
+    pyenv global 3.10.14 && \
+    echo "eval \"\$(${PYENV_ROOT}/bin/pyenv init -)\"" >> /root/.bashrc && \
+    echo "eval \"\$(${PYENV_ROOT}/bin/pyenv virtualenv-init -)\"" >> /root/.bashrc \
+    '
 
 RUN git clone https://github.com/master-of-zen/Av1an /tmp/Av1an && \
     cd /tmp/Av1an && \
