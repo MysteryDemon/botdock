@@ -1,33 +1,15 @@
-# -- Stage 1: av1an image (Arch-based) with ffmpeg, encoders, and av1an ----------
-FROM masterofzen/av1an:latest AS av1an-base
+# -- Stage 1: build av1an from source on Fedora ----------------------------------
+FROM fedora:43 AS av1an-builder
+RUN dnf -y update && \
+    dnf -y install gcc gcc-c++ rust cargo clang nasm git \
+    ffmpeg-free-devel libvpx-devel svt-av1-devel && \
+    dnf clean all
+RUN git clone https://github.com/master-of-zen/Av1an.git /tmp/Av1an && \
+    cd /tmp/Av1an && \
+    cargo build --release && \
+    strip /tmp/Av1an/target/release/av1an
 
-# -- Stage 2: collect only the shared libs the av1an binaries actually need ------
-FROM av1an-base AS av1an-deps
-USER root
-RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
-    for bin in \
-    /usr/bin/ffmpeg /usr/bin/ffprobe \
-    /usr/local/bin/av1an /usr/local/bin/rav1e \
-    /usr/bin/aomenc /usr/bin/SvtAv1EncApp \
-    /usr/bin/vpxenc /usr/bin/mkvmerge; do \
-    [ -f "$bin" ] && cp "$bin" /av1an-deps/bin/ ; \
-    done && \
-    for bin in /av1an-deps/bin/*; do \
-    ldd "$bin" 2>/dev/null | grep "=>" | awk '{print $3}' | sort -u | \
-    while read -r lib; do \
-    [ -f "$lib" ] && cp -nL "$lib" /av1an-deps/lib/ ; \
-    done ; \
-    done && \
-    # Remove core glibc/system libs and OpenSSL – the host OS supplies these
-    rm -f /av1an-deps/lib/libc.so* /av1an-deps/lib/libm.so* \
-    /av1an-deps/lib/libpthread.so* /av1an-deps/lib/libdl.so* \
-    /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux* \
-    /av1an-deps/lib/libcrypto.so* /av1an-deps/lib/libssl.so* \
-    /av1an-deps/lib/libstdc++.so* /av1an-deps/lib/libgcc_s.so* \
-    /av1an-deps/lib/libz.so* /av1an-deps/lib/libpcre2*.so* \
-    /av1an-deps/lib/libpython*.so*
-
-# -- Stage 3: final image -------------------------------------------------------
+# -- Stage 2: final image -------------------------------------------------------
 FROM fedora:43
 
 ARG PYTHON_VERSION=3.10
@@ -38,7 +20,8 @@ RUN dnf -y update && \
     python${PYTHON_VERSION} python${PYTHON_VERSION}-devel mediainfo psmisc procps-ng supervisor \
     zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel libffi-devel \
     xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl \
-    pkgconfig aria2 python3.12 python3.12-libs && \
+    pkgconfig aria2 \
+    ffmpeg-free aom svt-av1 libvpx mkvtoolnix && \
     dnf clean all
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
@@ -75,23 +58,7 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
 
 WORKDIR /app
 
-# Copy av1an binaries from the av1an Docker image
-COPY --from=av1an-deps /av1an-deps/bin/ffmpeg /bin/ffmpeg
-COPY --from=av1an-deps /av1an-deps/bin/ffprobe /bin/ffprobe
-COPY --from=av1an-deps /av1an-deps/bin/av1an /usr/local/bin/av1an.bin
-COPY --from=av1an-deps /av1an-deps/bin/rav1e /usr/local/bin/rav1e
-COPY --from=av1an-deps /av1an-deps/bin/aomenc /usr/local/bin/aomenc
-COPY --from=av1an-deps /av1an-deps/bin/SvtAv1EncApp /usr/local/bin/SvtAv1EncApp
-COPY --from=av1an-deps /av1an-deps/bin/vpxenc /usr/local/bin/vpxenc
-COPY --from=av1an-deps /av1an-deps/bin/mkvmerge /usr/local/bin/mkvmerge
-
-# Copy shared libraries required by the above binaries (codec libs, etc.)
-COPY --from=av1an-deps /av1an-deps/lib/ /usr/local/lib/av1an/
-# Register av1an libs with ldconfig (NOT LD_LIBRARY_PATH) so they don't override system libs
-RUN echo '/usr/local/lib/av1an' > /etc/ld.so.conf.d/av1an.conf && ldconfig
-
-# Wrapper for av1an: bypass pyenv shims so av1an finds system Python 3.12
-RUN { echo '#!/bin/bash'; echo 'exec env PATH=/usr/local/bin:/usr/bin:/bin /usr/local/bin/av1an.bin "$@"'; } \
-    > /usr/local/bin/av1an && chmod +x /usr/local/bin/av1an
+# Copy av1an binary built natively on Fedora
+COPY --from=av1an-builder /tmp/Av1an/target/release/av1an /usr/local/bin/av1an
 
 COPY . .
