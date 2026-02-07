@@ -1,8 +1,5 @@
 FROM archlinux:latest
 
-ARG PYTHON_VERSION=3.10
-ENV PYTHON_VERSION=${PYTHON_VERSION}
-
 RUN pacman -Syu --noconfirm && \
     pacman -S --noconfirm gcc make wget pv git bash xz gawk \
     python python-pip mediainfo psmisc procps-ng supervisor \
