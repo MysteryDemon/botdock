@@ -24,7 +24,8 @@ RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
     /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux* \
     /av1an-deps/lib/libcrypto.so* /av1an-deps/lib/libssl.so* \
     /av1an-deps/lib/libstdc++.so* /av1an-deps/lib/libgcc_s.so* \
-    /av1an-deps/lib/libz.so* /av1an-deps/lib/libpcre2*.so*
+    /av1an-deps/lib/libz.so* /av1an-deps/lib/libpcre2*.so* \
+    /av1an-deps/lib/libpython*.so*
 
 # -- Stage 3: final image -------------------------------------------------------
 FROM fedora:43
@@ -37,7 +38,7 @@ RUN dnf -y update && \
     python${PYTHON_VERSION} python${PYTHON_VERSION}-devel mediainfo psmisc procps-ng supervisor \
     zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel libffi-devel \
     xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl \
-    pkgconfig aria2 && \
+    pkgconfig aria2 python3.12 python3.12-libs && \
     dnf clean all
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
@@ -77,7 +78,7 @@ WORKDIR /app
 # Copy av1an binaries from the av1an Docker image
 COPY --from=av1an-deps /av1an-deps/bin/ffmpeg /bin/ffmpeg
 COPY --from=av1an-deps /av1an-deps/bin/ffprobe /bin/ffprobe
-COPY --from=av1an-deps /av1an-deps/bin/av1an /usr/local/bin/av1an
+COPY --from=av1an-deps /av1an-deps/bin/av1an /usr/local/bin/av1an.bin
 COPY --from=av1an-deps /av1an-deps/bin/rav1e /usr/local/bin/rav1e
 COPY --from=av1an-deps /av1an-deps/bin/aomenc /usr/local/bin/aomenc
 COPY --from=av1an-deps /av1an-deps/bin/SvtAv1EncApp /usr/local/bin/SvtAv1EncApp
@@ -88,5 +89,9 @@ COPY --from=av1an-deps /av1an-deps/bin/mkvmerge /usr/local/bin/mkvmerge
 COPY --from=av1an-deps /av1an-deps/lib/ /usr/local/lib/av1an/
 # Register av1an libs with ldconfig (NOT LD_LIBRARY_PATH) so they don't override system libs
 RUN echo '/usr/local/lib/av1an' > /etc/ld.so.conf.d/av1an.conf && ldconfig
+
+# Wrapper for av1an: bypass pyenv shims so av1an finds system Python 3.12
+RUN printf '#!/bin/bash\nexec env PATH=/usr/local/bin:/usr/bin:/bin "${BASH_SOURCE%/*}/av1an.bin" "$@"\n' \
+    > /usr/local/bin/av1an && chmod +x /usr/local/bin/av1an
 
 COPY . .
