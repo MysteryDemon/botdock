@@ -91,7 +91,7 @@ COPY --from=av1an-deps /av1an-deps/lib/ /usr/local/lib/av1an/
 RUN echo '/usr/local/lib/av1an' > /etc/ld.so.conf.d/av1an.conf && ldconfig
 
 # Wrapper for av1an: bypass pyenv shims so av1an finds system Python 3.12
-RUN printf '#!/bin/bash\nexec env PATH=/usr/local/bin:/usr/bin:/bin "${BASH_SOURCE%/*}/av1an.bin" "$@"\n' \
+RUN { echo '#!/bin/bash'; echo 'exec env PATH=/usr/local/bin:/usr/bin:/bin /usr/local/bin/av1an.bin "$@"'; } \
     > /usr/local/bin/av1an && chmod +x /usr/local/bin/av1an
 
 COPY . .
