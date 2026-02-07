@@ -9,7 +9,8 @@ RUN pacman -Syu --noconfirm && \
     zlib bzip2 readline sqlite openssl libffi \
     findutils gdbm ncurses tar curl \
     aria2 base-devel tk \
-    rust nasm clang vapoursynth && \
+    rust nasm clang vapoursynth \
+    autoconf automake libtool perl && \
     pacman -Scc --noconfirm
 
 ENV PYENV_ROOT="/root/.pyenv"
@@ -22,12 +23,7 @@ RUN bash -c '\
     git clone https://github.com/pyenv/pyenv-virtualenv.git $PYENV_ROOT/plugins/pyenv-virtualenv && \
     eval "$(pyenv init -)" && \
     eval "$(pyenv virtualenv-init -)" && \
-    pyenv install 3.8.18 && \
-    pyenv install 3.9.18 && \
     pyenv install 3.10.14 && \
-    pyenv install 3.11.9 && \
-    pyenv install 3.12.3 && \
-    pyenv install 3.13.3 && \
     pyenv global 3.10.14' && \
     echo '\''eval "$(${PYENV_ROOT}/bin/pyenv init -)"'\'' >> /root/.bashrc && \
     echo '\''eval "$(${PYENV_ROOT}/bin/pyenv virtualenv-init -)"'\'' >> /root/.bashrc
