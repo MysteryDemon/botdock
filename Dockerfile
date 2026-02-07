@@ -9,7 +9,8 @@ RUN pacman -Syu --noconfirm && \
     zlib bzip2 readline sqlite openssl libffi \
     findutils gdbm ncurses tar curl \
     aria2 base-devel tk \
-    rust nasm clang vapoursynth && \
+    rust nasm clang vapoursynth \
+    libuuid libnsl && \
     pacman -Scc --noconfirm
 
 ENV PYENV_ROOT="/root/.pyenv"
