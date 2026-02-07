@@ -8,8 +8,16 @@ RUN pacman -Syu --noconfirm && \
     aria2 base-devel tk \
     rust nasm clang vapoursynth \
     autoconf automake libtool perl \
-    aom ffms2 libvpx mkvtoolnix-cli svt-av1 vmaf && \
+    aom ffms2 libvpx mkvtoolnix-cli vmaf && \
     pacman -Scc --noconfirm
+
+RUN pacman -Syu --noconfirm cmake base-devel nasm git && \
+    git clone --depth 1 https://gitlab.com/AOMediaCodec/SVT-AV1.git /tmp/SVT-AV1 && \
+    cd /tmp/SVT-AV1/Build && \
+    cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/SVT-AV1
 
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
