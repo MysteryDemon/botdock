@@ -1,3 +1,28 @@
+# -- Stage 1: av1an image (Arch-based) with ffmpeg, encoders, and av1an ----------
+FROM masterofzen/av1an:latest AS av1an-base
+
+# -- Stage 2: collect only the shared libs the av1an binaries actually need ------
+FROM av1an-base AS av1an-deps
+RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
+    for bin in \
+    /usr/bin/ffmpeg /usr/bin/ffprobe \
+    /usr/local/bin/av1an /usr/local/bin/rav1e \
+    /usr/bin/aomenc /usr/bin/SvtAv1EncApp \
+    /usr/bin/vpxenc /usr/bin/mkvmerge; do \
+    [ -f "$bin" ] && cp "$bin" /av1an-deps/bin/ ; \
+    done && \
+    for bin in /av1an-deps/bin/*; do \
+    ldd "$bin" 2>/dev/null | grep "=>" | awk '{print $3}' | sort -u | \
+    while read -r lib; do \
+    [ -f "$lib" ] && cp -nL "$lib" /av1an-deps/lib/ ; \
+    done ; \
+    done && \
+    # Remove core glibc/system libs – the host OS supplies these
+    rm -f /av1an-deps/lib/libc.so* /av1an-deps/lib/libm.so* \
+    /av1an-deps/lib/libpthread.so* /av1an-deps/lib/libdl.so* \
+    /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux*
+
+# -- Stage 3: final image -------------------------------------------------------
 FROM fedora:43
 
 ARG PYTHON_VERSION=3.10
@@ -44,13 +69,20 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
     /app
 
 WORKDIR /app
-COPY --from=mwader/static-ffmpeg:latest /ffmpeg /bin/ffmpeg
-COPY --from=mwader/static-ffmpeg:latest /ffprobe /bin/ffprobe
-COPY --from=mwader/static-ffmpeg:latest /doc /doc
-COPY --from=mwader/static-ffmpeg:latest /versions.json /versions.json
-COPY --from=mwader/static-ffmpeg:latest /etc/ssl/cert.pem /etc/ssl/cert.pem
-COPY --from=mwader/static-ffmpeg:latest /etc/fonts /etc/fonts
-COPY --from=mwader/static-ffmpeg:latest /usr/share/fonts /usr/share/fonts
-COPY --from=mwader/static-ffmpeg:latest /usr/share/consolefonts /usr/share/consolefonts
-COPY --from=mwader/static-ffmpeg:latest /var/cache/fontconfig /var/cache/fontconfig
+
+# Copy av1an binaries from the av1an Docker image
+COPY --from=av1an-deps /av1an-deps/bin/ffmpeg /bin/ffmpeg
+COPY --from=av1an-deps /av1an-deps/bin/ffprobe /bin/ffprobe
+COPY --from=av1an-deps /av1an-deps/bin/av1an /usr/local/bin/av1an
+COPY --from=av1an-deps /av1an-deps/bin/rav1e /usr/local/bin/rav1e
+COPY --from=av1an-deps /av1an-deps/bin/aomenc /usr/local/bin/aomenc
+COPY --from=av1an-deps /av1an-deps/bin/SvtAv1EncApp /usr/local/bin/SvtAv1EncApp
+COPY --from=av1an-deps /av1an-deps/bin/vpxenc /usr/local/bin/vpxenc
+COPY --from=av1an-deps /av1an-deps/bin/mkvmerge /usr/local/bin/mkvmerge
+
+# Copy shared libraries required by the above binaries (codec libs, etc.)
+COPY --from=av1an-deps /av1an-deps/lib/ /usr/local/lib/av1an/
+ENV LD_LIBRARY_PATH="/usr/local/lib/av1an"
+RUN ldconfig
+
 COPY . .
