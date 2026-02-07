@@ -18,10 +18,13 @@ RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
     [ -f "$lib" ] && cp -nL "$lib" /av1an-deps/lib/ ; \
     done ; \
     done && \
-    # Remove core glibc/system libs – the host OS supplies these
+    # Remove core glibc/system libs and OpenSSL – the host OS supplies these
     rm -f /av1an-deps/lib/libc.so* /av1an-deps/lib/libm.so* \
     /av1an-deps/lib/libpthread.so* /av1an-deps/lib/libdl.so* \
-    /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux*
+    /av1an-deps/lib/librt.so* /av1an-deps/lib/ld-linux* \
+    /av1an-deps/lib/libcrypto.so* /av1an-deps/lib/libssl.so* \
+    /av1an-deps/lib/libstdc++.so* /av1an-deps/lib/libgcc_s.so* \
+    /av1an-deps/lib/libz.so*
 
 # -- Stage 3: final image -------------------------------------------------------
 FROM fedora:43
@@ -83,7 +86,7 @@ COPY --from=av1an-deps /av1an-deps/bin/mkvmerge /usr/local/bin/mkvmerge
 
 # Copy shared libraries required by the above binaries (codec libs, etc.)
 COPY --from=av1an-deps /av1an-deps/lib/ /usr/local/lib/av1an/
-ENV LD_LIBRARY_PATH="/usr/local/lib/av1an"
-RUN ldconfig
+# Register av1an libs with ldconfig (NOT LD_LIBRARY_PATH) so they don't override system libs
+RUN echo '/usr/local/lib/av1an' > /etc/ld.so.conf.d/av1an.conf && ldconfig
 
 COPY . .
