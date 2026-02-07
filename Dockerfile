@@ -30,11 +30,11 @@ ARG PYTHON_VERSION=3.10
 ENV PYTHON_VERSION=${PYTHON_VERSION}
 
 RUN dnf -y update && \
-    dnf -y install g++ make wget pv git bash xz gawk \
+    dnf -y install gcc gcc-c++ make wget pv git bash xz gawk patch \
     python${PYTHON_VERSION} python${PYTHON_VERSION}-devel mediainfo psmisc procps-ng supervisor \
     zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel libffi-devel \
     xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl \
-    aria2 && \
+    pkgconfig aria2 && \
     dnf clean all
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
@@ -53,12 +53,12 @@ RUN bash -c '\
     eval "$(pyenv init -)" && \
     eval "$(pyenv virtualenv-init -)" && \
     export PYTHON_CONFIGURE_OPTS="--without-tk" && \
-    pyenv install 3.8.18 && \
-    pyenv install 3.9.18 && \
-    pyenv install 3.10.14 && \
-    pyenv install 3.11.9 && \
-    pyenv install 3.12.3 && \
-    pyenv install 3.13.3 && \
+    pyenv install -v 3.8.18 && \
+    pyenv install -v 3.9.18 && \
+    pyenv install -v 3.10.14 && \
+    pyenv install -v 3.11.9 && \
+    pyenv install -v 3.12.3 && \
+    pyenv install -v 3.13.3 && \
     pyenv global 3.10.14 && \
     unset PYTHON_CONFIGURE_OPTS'
 
