@@ -3,6 +3,7 @@ FROM masterofzen/av1an:latest AS av1an-base
 
 # -- Stage 2: collect only the shared libs the av1an binaries actually need ------
 FROM av1an-base AS av1an-deps
+USER root
 RUN mkdir -p /av1an-deps/bin /av1an-deps/lib && \
     for bin in \
     /usr/bin/ffmpeg /usr/bin/ffprobe \
