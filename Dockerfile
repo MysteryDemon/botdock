@@ -12,11 +12,6 @@ RUN pacman -Syu --noconfirm && \
     rust nasm clang vapoursynth && \
     pacman -Scc --noconfirm
 
-RUN python -m ensurepip --upgrade && \
-    python -m pip install --upgrade pip setuptools && \
-    ln -sf /usr/bin/python /usr/bin/python3 && \
-    ln -sf /usr/bin/pip /usr/bin/pip3
-
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
 
