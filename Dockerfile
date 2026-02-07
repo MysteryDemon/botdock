@@ -1,33 +1,21 @@
-# -- Stage 1: build av1an from source on Fedora ----------------------------------
-FROM fedora:43 AS av1an-builder
-RUN dnf -y update && \
-    dnf -y install gcc gcc-c++ rust cargo clang nasm git \
-    ffmpeg-free-devel libvpx-devel svt-av1-devel && \
-    dnf clean all
-RUN git clone https://github.com/master-of-zen/Av1an.git /tmp/Av1an && \
-    cd /tmp/Av1an && \
-    cargo build --release && \
-    strip /tmp/Av1an/target/release/av1an
-
-# -- Stage 2: final image -------------------------------------------------------
-FROM fedora:43
+FROM archlinux:latest
 
 ARG PYTHON_VERSION=3.10
 ENV PYTHON_VERSION=${PYTHON_VERSION}
 
-RUN dnf -y update && \
-    dnf -y install gcc gcc-c++ make wget pv git bash xz gawk patch \
-    python${PYTHON_VERSION} python${PYTHON_VERSION}-devel mediainfo psmisc procps-ng supervisor \
-    zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel libffi-devel \
-    xz-devel findutils libnsl2-devel libuuid-devel gdbm-devel ncurses-devel tar curl \
-    pkgconfig aria2 \
-    ffmpeg-free aom svt-av1 libvpx mkvtoolnix && \
-    dnf clean all
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm gcc make wget pv git bash xz gawk \
+    python python-pip mediainfo psmisc procps-ng supervisor \
+    zlib bzip2 readline sqlite openssl libffi \
+    findutils gdbm ncurses tar curl \
+    aria2 base-devel tk \
+    rust nasm clang vapoursynth && \
+    pacman -Scc --noconfirm
 
 RUN python${PYTHON_VERSION} -m ensurepip --upgrade && \
     python${PYTHON_VERSION} -m pip install --upgrade pip setuptools && \
-    alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
-    alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip${PYTHON_VERSION} 1
+    ln -sf /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
+    ln -sf /usr/bin/pip${PYTHON_VERSION} /usr/bin/pip3
 
 ENV PYENV_ROOT="/root/.pyenv"
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
@@ -39,15 +27,19 @@ RUN bash -c '\
     git clone https://github.com/pyenv/pyenv-virtualenv.git $PYENV_ROOT/plugins/pyenv-virtualenv && \
     eval "$(pyenv init -)" && \
     eval "$(pyenv virtualenv-init -)" && \
-    export PYTHON_CONFIGURE_OPTS="--without-tk" && \
-    pyenv install -v 3.8.18 && \
-    pyenv install -v 3.9.18 && \
-    pyenv install -v 3.10.14 && \
-    pyenv install -v 3.11.9 && \
-    pyenv install -v 3.12.3 && \
-    pyenv install -v 3.13.3 && \
-    pyenv global 3.10.14 && \
-    unset PYTHON_CONFIGURE_OPTS'
+    pyenv install 3.8.18 && \
+    pyenv install 3.9.18 && \
+    pyenv install 3.10.14 && \
+    pyenv install 3.11.9 && \
+    pyenv install 3.12.3 && \
+    pyenv install 3.13.3 && \
+    pyenv global 3.10.14'
+
+RUN git clone https://github.com/master-of-zen/Av1an /tmp/Av1an && \
+    cd /tmp/Av1an && \
+    cargo build --release && \
+    cp target/release/av1an /usr/local/bin/av1an && \
+    rm -rf /tmp/Av1an
 
 ENV SUPERVISORD_CONF_DIR=/etc/supervisor/conf.d
 ENV SUPERVISORD_LOG_DIR=/var/log/supervisor
@@ -57,8 +49,13 @@ RUN mkdir -p ${SUPERVISORD_CONF_DIR} \
     /app
 
 WORKDIR /app
-
-# Copy av1an binary built natively on Fedora
-COPY --from=av1an-builder /tmp/Av1an/target/release/av1an /usr/local/bin/av1an
-
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /bin/ffmpeg
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /bin/ffprobe
+COPY --from=mwader/static-ffmpeg:latest /doc /doc
+COPY --from=mwader/static-ffmpeg:latest /versions.json /versions.json
+COPY --from=mwader/static-ffmpeg:latest /etc/ssl/cert.pem /etc/ssl/cert.pem
+COPY --from=mwader/static-ffmpeg:latest /etc/fonts /etc/fonts
+COPY --from=mwader/static-ffmpeg:latest /usr/share/fonts /usr/share/fonts
+COPY --from=mwader/static-ffmpeg:latest /usr/share/consolefonts /usr/share/consolefonts
+COPY --from=mwader/static-ffmpeg:latest /var/cache/fontconfig /var/cache/fontconfig
 COPY . .
