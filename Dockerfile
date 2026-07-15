@@ -1,5 +1,7 @@
 FROM archlinux:latest
 
+ARG LSMASH_WORKS_VERSION=1296.0.0.1
+
 RUN pacman -Syu --noconfirm && \
     pacman -S --noconfirm gcc make wget pv git bash xz gawk \
     python python-pip mediainfo psmisc procps-ng supervisor \
@@ -10,6 +12,10 @@ RUN pacman -Syu --noconfirm && \
     autoconf automake libtool perl \
     aom ffms2 libvpx mkvtoolnix-cli vmaf && \
     pacman -Scc --noconfirm
+
+RUN /usr/bin/python -m pip install --break-system-packages --no-cache-dir --no-deps \
+        --only-binary=:all: "vapoursynth-lsmas==${LSMASH_WORKS_VERSION}" && \
+    /usr/bin/python -c 'import vapoursynth as vs; assert all(hasattr(vs.core.lsmas, fn) for fn in ("LWLibavSource", "LibavSMASHSource"))'
 
 RUN pacman -Syu --noconfirm cmake base-devel nasm git && \
     git clone --depth 1 https://gitlab.com/AOMediaCodec/SVT-AV1.git /tmp/SVT-AV1 && \
